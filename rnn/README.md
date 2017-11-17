@@ -9,7 +9,7 @@ which will automatically use the cuDNN backend if run on CUDA with cuDNN install
 During training, if a keyboard interrupt (Ctrl-C) is received,
 training is stopped and the current model is evaluated against the test dataset.
 
-The `main.py` script accepts the following arguments:
+The `rnn.py` script accepts the following arguments:
 
 ```bash
 optional arguments:
@@ -38,7 +38,7 @@ With these arguments, a variety of models can be tested:
 ```bash
 python rnn.py --cuda --model RNN_TANH --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40
 python rnn.py --model LSTM --bidir --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40
-python rnn.py --cuda --model GRU --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40 --save \'path/model.pt\'
+python rnn.py --cuda --model GRU --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40 --save 'path/model.pt'
 python rnn.py --model RNN_RELU --bidir --clip 0.2 --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40
 ...
 ```
