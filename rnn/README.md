@@ -15,6 +15,7 @@ The `rnn.py` script accepts the following arguments:
 optional arguments:
   -h, --help         show this help message and exit
   --data DATA        location of the data corpus
+  --embeds EMBEDS    location of the pretrained embeddings
   --model MODEL      type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)
   --embdims EMBDIMS  dimensionality of word embeddings
   --nunits NUNITS    number of hidden units per layer
@@ -36,7 +37,7 @@ optional arguments:
 With these arguments, a variety of models can be tested:
 
 ```bash
-python rnn.py --cuda --model RNN_TANH --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40
+python rnn.py --cuda --model RNN_TANH --embeds '../embeddings/glove.6b/glove.6b.50d.txt' --embdims 50 --epochs 40
 python rnn.py --model LSTM --bidir --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40
 python rnn.py --cuda --model GRU --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40 --save 'path/model.pt'
 python rnn.py --model RNN_RELU --bidir --clip 0.2 --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40
