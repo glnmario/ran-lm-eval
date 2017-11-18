@@ -6,12 +6,16 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
+import numpy as np
+
 import data
 import model
 
 parser = argparse.ArgumentParser(description='PyTorch PennTreeBank RNN/LSTM Language Model')
 parser.add_argument('--data', type=str, default='../data/penn',
                     help='location of the data corpus')
+parser.add_argument('--embeds', type=str, default=None,
+                    help='location of the pretrained embeddings')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
 parser.add_argument('--bidir', action='store_true', default=False,
@@ -89,11 +93,68 @@ val_data = batchify(corpus.valid, eval_batch_size)
 test_data = batchify(corpus.test, eval_batch_size)
 
 ###############################################################################
+# Prepare pretrained embeddings
+##############################################################################
+embedding_matrix = None
+
+if args.embeds is not None:
+    word2vector = {}
+    with open(args.embeds, 'r') as f:
+        for line in f:
+            values = line.split()
+            if len(values) != args.embdims + 1:
+                # probably an error occurred during tokenization
+                continue
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype='float32')
+            word2vector[word] = coefs
+
+        # generate an average vector for unknown tokens
+        vectors = np.array(list(word2vector.values()))
+        mean_vector = np.mean(vectors.reshape((-1, args.embdims)), axis=0)
+
+        # for numbers, we use the average of the number vectors 0 to 2999
+        # (why 3000? e.g. to include years)
+        number_vector = np.zeros_like(mean_vector)
+        normalization = 0
+        for i in range(3000):
+            try:
+                number_vector += word2vector[str(i)]
+                normalization += 1
+            except:
+                continue
+        number_vector /= normalization
+
+        corpus_w2i = corpus.dictionary.word2idx
+        embedding_matrix = np.tile(mean_vector, (len(corpus_w2i) + 1, 1))
+
+        for word, i in corpus_w2i.items():
+            word_vector = word2vector.get(word)
+
+            if word_vector is not None:
+                embedding_matrix[i - 1] = word_vector
+            else:
+                # word not found in pretrained embeddings
+                if word == "N":
+                    embedding_matrix[i - 1] = number_vector
+                elif len(word.split("-")) > 1:
+                    compound_word = word.split("-")
+                    vector = np.zeros_like(mean_vector)
+                    for w in compound_word:
+                        try:
+                            vector += word2vector[word]
+                        except KeyError:
+                            vector += mean_vector
+                    vector /= len(compound_word)
+                    embedding_matrix[i - 1] = word_vector
+
+
+###############################################################################
 # Build the model
 ###############################################################################
 
 ntokens = len(corpus.dictionary)
-model = model.RNNModel(args.model, ntokens, args.embdims, args.nunits,
+model = model.RNNModel(args.model, embedding_matrix, ntokens, args.embdims, args.nunits,
                        args.nlayers, args.bidir, args.dropout, args.tied)
 if args.cuda:
     model.cuda()

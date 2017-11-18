@@ -1,5 +1,6 @@
 import torch.nn as nn
 from torch.autograd import Variable
+from torch import from_numpy as to_tensor
 
 class RNNModel(nn.Module):
     """
@@ -9,6 +10,7 @@ class RNNModel(nn.Module):
 
     def __init__(self,
                  rnn_type,
+                 embeddings,
                  vocab_size,
                  embed_dims,
                  n_units,
@@ -18,10 +20,12 @@ class RNNModel(nn.Module):
                  tie_weights=False):
         super(RNNModel, self).__init__()
 
-        # optionally dd dropout regularisation
+        # optionally add dropout regularisation
         self.dropout = nn.Dropout(dropout)
+
         # the embedding matrix of size |V| x d
         self.embed = nn.Embedding(vocab_size, embed_dims)
+        self.embed.weight = nn.Parameter(to_tensor(embeddings))
 
         self.bidir = bidirectional
 
