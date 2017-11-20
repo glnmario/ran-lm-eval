@@ -10,11 +10,11 @@ class RNNModel(nn.Module):
 
     def __init__(self,
                  rnn_type,
-                 embeddings,
                  vocab_size,
                  embed_dims,
                  n_units,
                  n_layers,
+                 embeddings=None,
                  bidirectional=False,
                  dropout=0.2,
                  tie_weights=False):
@@ -25,7 +25,8 @@ class RNNModel(nn.Module):
 
         # the embedding matrix of size |V| x d
         self.embed = nn.Embedding(vocab_size, embed_dims)
-        self.embed.weight = nn.Parameter(to_tensor(embeddings))
+        if embeddings is not None:
+            self.embed.weight = nn.Parameter(to_tensor(embeddings))
 
         self.bidir = bidirectional
 
