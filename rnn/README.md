@@ -41,5 +41,7 @@ python rnn.py --cuda --model RNN_TANH --embeds '../embeddings/glove.6b/glove.6b.
 python rnn.py --model LSTM --bidir --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40
 python rnn.py --cuda --model GRU --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40 --save 'path/model.pt'
 python rnn.py --model RNN_RELU --bidir --clip 0.2 --embdims 50 --nunits 650 --lr 0.01 --dropout 0.5 --epochs 40
-...
+python rnn.py --data '../data_check' --model LSTM --bidir --embdims 50 --nunits 300 --lr 0.01 --dropout 0.5 --epochs 20
+
+...and so on. Be creative!
 ```
