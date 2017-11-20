@@ -19,9 +19,22 @@ class Dictionary(object):
 class Corpus(object):
     def __init__(self, path):
         self.dictionary = Dictionary()
-        self.train = self.tokenize(os.path.join(path, 'train.txt'))
-        self.valid = self.tokenize(os.path.join(path, 'valid.txt'))
-        self.test = self.tokenize(os.path.join(path, 'test.txt'))
+
+        # In case we only want to train on a subset of the data
+        if 'data_check' in path:
+            suffix = '_check'
+        else:
+            suffix = ''
+
+        try:
+            self.train = self.tokenize(os.path.join(path, 'train' + suffix + '.txt'))
+            self.valid = self.tokenize(os.path.join(path, 'valid' + suffix + '.txt'))
+            self.test = self.tokenize(os.path.join(path, 'test' + suffix + '.txt'))
+        except:
+            path = path[1:]  # from ../some_path to ./some_path
+            self.train = self.tokenize(os.path.join(path, 'train' + suffix + '.txt'))
+            self.valid = self.tokenize(os.path.join(path, 'valid' + suffix + '.txt'))
+            self.test = self.tokenize(os.path.join(path, 'test' + suffix + '.txt'))
 
     def tokenize(self, path):
         """Tokenizes a text file."""
