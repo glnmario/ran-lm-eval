@@ -37,7 +37,7 @@ import data as d_read
 
 # read in reduced data set
 
-data = d_read.Corpus("/language-modeling-nlp1/data/penn")
+data = d_read.Corpus("../language-modeling-nlp1/data/penn")
 
 train_data = data.train
 valid_data = data.valid
@@ -159,7 +159,7 @@ def exp_lr_scheduler(optimizer, epoch, init_lr=0.01, lr_decay_epoch=7):
 class FFNN(nn.Module):
 # added optional input_to_hidden connections
 
-    def __init__(self, vocab_size, embedding_dim, context_size, hidden_size, input_to_output = False):
+    def __init__(self, embeddings, vocab_size, embedding_dim, context_size, hidden_size, input_to_output = False):
         super(FFNN, self).__init__()
 
         #embedding = nn.Embedding(embeddings.size(0), embeddings.size(1))
@@ -226,7 +226,7 @@ idx2word = data.dictionary.idx2word
 losses = []
 
 
-model = FFNN(ntokens, EMBEDDING_DIM, CONTEXT_SIZE, HIDDEN_SIZE)
+model = FFNN(embeddings, ntokens, EMBEDDING_DIM, CONTEXT_SIZE, HIDDEN_SIZE)
 
 optimizer = optim.SGD(model.parameters(), lr=0.01)
 
@@ -250,7 +250,6 @@ for epoch in range(3):
         # Step 2. Recall that torch *accumulates* gradients. Before passing in a
         # new instance, you need to zero out the gradients from the old
         # instance
-        model.zero_grad()
 
         # Step 3. Run the forward pass, getting log probabilities over next
         # words
@@ -275,6 +274,7 @@ for epoch in range(3):
 
             # weight update after gradients of minibatch are collected
             optimizer.step()
+            model.zero_grad()
             mini_batch = 0
 
         #b = list(model.parameters())[0].clone()
