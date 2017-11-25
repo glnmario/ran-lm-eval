@@ -12,6 +12,9 @@ import torchwordemb
 import data_check as d_read
 
 
+
+CUDA = torch.cuda.is_available()
+print("CUDA: %s" % CUDA)
 # Architecture feed forward NN presented by Bengio
 
 ## Word features, (|V|x m) matrix, where |V| = vocab size
@@ -49,11 +52,13 @@ ngrams_valid_check = [([valid_data_check[i],valid_data_check[i+1],valid_data_che
 
 ## load embeddings
 try:
-	vocab, vec = torchwordemb.load_glove_text("../embeddings/glove.6b/glove.6B.50d.txt")
+    vocab, vec = torchwordemb.load_glove_text("../embeddings/glove.6b/glove.6B.50d.txt")
 except FileNotFoundError:
-	vocab, vec = torchwordemb.load_glove_text("./embeddings/glove.6b/glove.6B.50d.txt")
+    vocab, vec = torchwordemb.load_glove_text("../embeddings/glove.6b/glove.6B.50d.txt")
+
 
 # vocab of treebank
+
 vocab_tb = data_check.dictionary.word2idx.keys()
 
 # mean  vec of all embeddings
@@ -159,7 +164,7 @@ class FFNN(nn.Module):
 
 
     def forward(self, inputs,input_to_output = False):
-        embeds = self.embeddings(inputs).view((1, -1)) ## just creates a 1 dimensional array from the given arrays
+        embeds = self.embeddings(inputs).view((32,250)) #.view((1, -1)) ## just creates a 1 dimensional array from the given arrays
         out = torch.nn.functional.tanh(self.linear1(embeds))
 
         if self.input_to_output == True:
@@ -176,16 +181,37 @@ class FFNN(nn.Module):
 def evaluate(model, data):
     """Evaluate a model on a data set."""
     correct = 0.0
+    for batch in minibatch(data):
 
-    for words, target in data:
-        lookup_tensor = Variable(torch.LongTensor([words]))
-        scores = model(lookup_tensor)
-        predict = scores.data.numpy().argmax(axis=1)[0]
+        minbatch = get_variable(batch[0])
+        targets = get_variable(batch[1])
 
-        if predict == target:
-            correct += 1
+        scores = model(minbatch)
+
+        _, predictions = torch.max(scores.data, 1)
+
+        correct += torch.eq(predictions, targets).sum().data[0]
 
     return correct, len(data), correct/len(data)
+
+
+
+def get_variable(x):
+    """Get a Variable given indices x"""
+    tensor = torch.cuda.LongTensor(x) if CUDA else torch.LongTensor(x)
+    return Variable(tensor)
+
+def minibatch(data, batch_size=32):
+    num_batches = len(data)//32
+    for i in range(0, num_batches , batch_size):
+        minibatch = []
+        batch = data[i:i+batch_size]
+        ngrams = [batch[d][0] for d in range(batch_size)]
+        targets = [batch[j][1] for j in range(batch_size)]
+        minibatch.append(ngrams)
+        minibatch.append(targets)
+
+        yield minibatch
 
 
 # Run model
@@ -201,24 +227,35 @@ ntokens = len(data_check.dictionary)
 word2idx = data_check.dictionary.word2idx
 idx2word = data_check.dictionary.idx2word
 losses = []
-
+print(len(ngrams_check))
 
 model = FFNN(embeddings,ntokens, EMBEDDING_DIM, CONTEXT_SIZE, HIDDEN_SIZE)
+
+if CUDA:
+    model.cuda()
+
+print(model)
+
 optimizer = optim.SGD(model.parameters(), lr=0.01)
 
-for epoch in range(3):
+for epoch in range(10):
     print("start training epoch: {}".format(epoch))
 
     total_loss = torch.Tensor([0])
 
-    mini_batch = 0 # counter used to use mini batches
+    #mini_batch = 0 # counter used to use mini batches
     optimizer = exp_lr_scheduler(optimizer, epoch, init_lr=0.01, lr_decay_epoch=10)
-    for context, target in ngrams_check:
-
-        mini_batch+=1
+    for batch in minibatch(ngrams_check):
 
 
-        context_var = torch.autograd.Variable(torch.LongTensor(context))
+        
+        #mini_batch+=1
+
+        minbatch = get_variable(batch[0])
+        targets = get_variable(batch[1])
+        #print(minbatch.size())
+
+        #context_var = torch.autograd.Variable(torch.LongTensor(context))
 
         # Step 2. Recall that torch *accumulates* gradients. Before passing in a
         # new instance, you need to zero out the gradients from the old
@@ -227,7 +264,7 @@ for epoch in range(3):
 
         # Step 3. Run the forward pass, getting log probabilities over next
         # words
-        probs = model(context_var)
+        probs = model(minbatch)
 
         # Step 4. Compute your loss function. (Again, Torch wants the target
         # word wrapped in a variable)
@@ -235,21 +272,21 @@ for epoch in range(3):
 
 
 
-        loss_out = loss(probs, torch.autograd.Variable(torch.LongTensor([target])))
+        loss_out = loss(probs, targets)
 
 
-
+        model.zero_grad()
 
         # calculates gradient
 
         loss_out.backward()
 
-        if mini_batch == 32:
+        #if mini_batch == 32:
 
             # weight update after gradients of minibatch are collected
-            optimizer.step()
-            model.zero_grad()
-            mini_batch = 0
+        optimizer.step()
+            
+        #mini_batch = 0
 
         #b = list(model.parameters())[0].clone()
         #print(torch.equal(a.data, b.data))
@@ -266,6 +303,12 @@ for epoch in range(3):
     print("loss this epoch: {}".format(list(total_loss)))
 
 
-# I do not know which format to use to save
-## http://pytorch.org/docs/master/notes/serialization.html
-#torch.save(model.state_dict(), "PATH")
+## TODO: ADD PERPLEXITY
+
+## model saving
+
+with open('model.pt', 'wb') as f:
+                torch.save(model, f)
+
+
+
