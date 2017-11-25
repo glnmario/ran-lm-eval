@@ -32,6 +32,7 @@ optional arguments:
   --cuda             use CUDA
   --log-interval N   report interval
   --save SAVE        path to save the final model
+  --log LOG          path to save the epoch-by-epoch log (csv format)
 ```
 
 With these arguments, a variety of models can be tested:

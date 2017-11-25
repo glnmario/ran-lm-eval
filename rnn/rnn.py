@@ -2,6 +2,7 @@
 import argparse
 import time
 import math
+import csv
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -48,6 +49,8 @@ parser.add_argument('--log-interval', type=int, default=200, metavar='N',
                     help='report interval')
 parser.add_argument('--save', type=str,  default='model.pt',
                     help='path to save the final model')
+parser.add_argument('--log', type=str,  default='log.csv',
+                    help='path to save the epoch-by-epoch log')
 args = parser.parse_args()
 
 # Set the random seed manually for reproducibility.
@@ -237,7 +240,7 @@ def train():
             cur_loss = total_loss[0] / args.log_interval
             elapsed = time.time() - start_time
             print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                    'loss {:5.2f} | ppl {:8.2f}'.format(
+                    'loss {:5.2f} | pp {:8.2f}'.format(
                 epoch, batch, len(train_data) // args.bptt, lr,
                 elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
             total_loss = 0
@@ -247,6 +250,16 @@ def train():
 lr = args.lr
 best_val_loss = None
 
+if args.log:
+    try:
+        f = open('./log/' + args.log , 'w')
+    except FileNotFoundError:
+        f = open('./rnn/log/' + args.log , 'w')
+    writer = csv.writer(f, delimiter=',')
+
+    # CSV header
+    writer.writerow(['epoch', 'time', 'valid loss', 'valid pp'])
+
 # At any point you can hit Ctrl + C to break out of training early.
 try:
     for epoch in range(1, args.epochs+1):
@@ -255,7 +268,7 @@ try:
         val_loss = evaluate(val_data)
         print('-' * 89)
         print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
-                'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
+                'valid pp {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
                                            val_loss, math.exp(val_loss)))
         print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.
@@ -266,9 +279,19 @@ try:
         else:
             # Anneal the learning rate if no improvement has been seen in the validation dataset.
             lr /= 4.0
+        if args.log:
+            writer.writerow([epoch,
+                            (time.time() - epoch_start_time),
+                            val_loss,
+                            math.exp(val_loss)])
 except KeyboardInterrupt:
     print('-' * 89)
     print('Exiting from training early')
+    if args.log:
+        f.close()
+
+if args.log:
+    f.close()
 
 # Load the best saved model.
 with open(args.save, 'rb') as f:
@@ -277,6 +300,6 @@ with open(args.save, 'rb') as f:
 # Run on test data.
 test_loss = evaluate(test_data)
 print('=' * 89)
-print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
+print('| End of training | test loss {:5.2f} | test pp {:8.2f}'.format(
     test_loss, math.exp(test_loss)))
 print('=' * 89)
