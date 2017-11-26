@@ -10,15 +10,15 @@ from torch.autograd import Variable
 import numpy as np
 
 import data
-import model
+import rnn
 
-parser = argparse.ArgumentParser(description='PyTorch PennTreeBank RNN/LSTM Language Model')
+parser = argparse.ArgumentParser(description='PyTorch PennTreeBank RNN/LSTM/RAN Language Model')
 parser.add_argument('--data', type=str, default='../data/penn/',
                     help='location of the data corpus')
 parser.add_argument('--embeds', type=str, default=None,
                     help='location of the pretrained embeddings')
 parser.add_argument('--model', type=str, default='LSTM',
-                    help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
+                    help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU, RAN)')
 parser.add_argument('--bidir', action='store_true', default=False,
                     help='use bidirectional network')
 parser.add_argument('--embdims', type=int, default=50,
@@ -33,7 +33,7 @@ parser.add_argument('--clip', type=float, default=0.25,
                     help='gradient clipping')
 parser.add_argument('--epochs', type=int, default=40,
                     help='upper epoch limit')
-parser.add_argument('--batch_size', type=int, default=32, metavar='N',
+parser.add_argument('--batch-size', type=int, default=32, metavar='N',
                     help='batch size')
 parser.add_argument('--bptt', type=int, default=35,
                     help='sequence (paragraph) length')
@@ -50,7 +50,7 @@ parser.add_argument('--log-interval', type=int, default=200, metavar='N',
 parser.add_argument('--save', type=str,  default='model.pt',
                     help='path to save the final model')
 parser.add_argument('--log', type=str,  default='log.csv',
-                    help='path to save the epoch-by-epoch log')
+                    help='path to save the epoch-by-epoch log (csv format)')
 args = parser.parse_args()
 
 # Set the random seed manually for reproducibility.
@@ -161,7 +161,7 @@ if args.embeds is not None:
 ###############################################################################
 
 ntokens = len(corpus.dictionary)
-model = model.RNNModel(args.model, ntokens, args.embdims, args.nunits, args.nlayers,
+model = rnn.RNNModel(args.model, ntokens, args.embdims, args.nunits, args.nlayers,
                        embedding_matrix, args.bidir, args.dropout, args.tied)
 if args.cuda:
     model.cuda()

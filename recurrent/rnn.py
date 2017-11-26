@@ -2,6 +2,8 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torch import from_numpy as to_tensor
 
+from ran import RAN
+
 class RNNModel(nn.Module):
     """
     Container module with an embedding layer, a recurrent layer, and an
@@ -30,7 +32,8 @@ class RNNModel(nn.Module):
 
         self.bidir = bidirectional
 
-        # select the correct
+        # select the correct architecture
+
         if rnn_type in ['LSTM', 'GRU']:
             self.rnn_type = rnn_type
             self.rnn = getattr(nn, rnn_type)(embed_dims,
@@ -38,6 +41,8 @@ class RNNModel(nn.Module):
                                              n_layers,
                                              dropout=dropout,
                                              bidirectional=self.bidir)
+        elif rnn_type == 'RAN':
+            self.rnn = RAN(embed_dims, n_units, n_layers, dropout=dropout)
         else:
             try:
                 model_info = rnn_type.split("_")
@@ -79,10 +84,15 @@ class RNNModel(nn.Module):
 
 
     def init_weights(self):
-        initrange = 0.1
-        self.embed.weight.data.uniform_(-initrange, initrange)
+        nn.init.xavier_uniform(self.embed.weight)
         self.output.bias.data.fill_(0)
-        self.output.weight.data.uniform_(-initrange, initrange)
+        nn.init.xavier_uniform(self.output.weight)
+
+        # This was the original RNN initialisation:
+        # initrange = 0.1
+        # self.embed.weight.data.uniform_(-initrange, initrange)
+        # self.output.bias.data.fill_(0)
+        # self.output.weight.data.uniform_(-initrange, initrange)
 
 
     def forward(self, input, hidden):
