@@ -1,6 +1,12 @@
+##############################################################
+# This file is need for back-compatibility of loaded models. #
+##############################################################
+
 import torch.nn as nn
 from torch.autograd import Variable
 from torch import from_numpy as to_tensor
+
+from ran import RAN
 
 class RNNModel(nn.Module):
     """
@@ -30,7 +36,8 @@ class RNNModel(nn.Module):
 
         self.bidir = bidirectional
 
-        # select the correct
+        # select the correct architecture
+
         if rnn_type in ['LSTM', 'GRU']:
             self.rnn_type = rnn_type
             self.rnn = getattr(nn, rnn_type)(embed_dims,
@@ -38,6 +45,8 @@ class RNNModel(nn.Module):
                                              n_layers,
                                              dropout=dropout,
                                              bidirectional=self.bidir)
+        elif rnn_type == 'RAN':
+            self.rnn = RAN(embed_dims, n_units, n_layers, dropout=dropout)
         else:
             try:
                 model_info = rnn_type.split("_")
@@ -79,20 +88,27 @@ class RNNModel(nn.Module):
 
 
     def init_weights(self):
-        initrange = 0.1
-        self.embed.weight.data.uniform_(-initrange, initrange)
+        nn.init.xavier_uniform(self.embed.weight)
         self.output.bias.data.fill_(0)
-        self.output.weight.data.uniform_(-initrange, initrange)
+        nn.init.xavier_uniform(self.output.weight)
+
+        # This was the original RNN initialisation:
+        # initrange = 0.1
+        # self.embed.weight.data.uniform_(-initrange, initrange)
+        # self.output.bias.data.fill_(0)
+        # self.output.weight.data.uniform_(-initrange, initrange)
 
 
     def forward(self, input, hidden):
         # Apply dropout to embedding layer as in "A Theoretically Grounded
         # Application of Dropout in Recurrent Neural Networks" (Gal &
         # Ghahramani, 2016) https://arxiv.org/pdf/1512.05287.pdf
-        embed = self.dropout(self.embed(input))
+
+        # embed = self.dropout(self.embed(input))
+        embed = self.encoder(input)
         rnn_output, hidden = self.rnn(embed, hidden)
-        rnn_output = self.dropout(rnn_output)
-        output = self.output(rnn_output.view(
+        # rnn_output = self.dropout(rnn_output)
+        output = self.decoder(rnn_output.view(
                                         rnn_output.size(0) * rnn_output.size(1),
                                         rnn_output.size(2)))
 
@@ -104,7 +120,10 @@ class RNNModel(nn.Module):
 
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
-        n = int(self.bidir) + 1  # bidirectional needs 2x units
+        try:
+            n = int(self.bidir) + 1  # bidirectional needs 2x units
+        except AttributeError:
+            n = 1
 
         if self.rnn_type == 'LSTM':
             return (Variable(weight.new(
@@ -112,5 +131,9 @@ class RNNModel(nn.Module):
                    (Variable(weight.new(
                         n * self.n_layers, batch_size, self.n_units).zero_())))
         else:
-            return Variable(weight.new(
+            try:
+                return Variable(weight.new(
                         n * self.n_layers, batch_size, self.n_units).zero_())
+            except AttributeError:
+                return Variable(weight.new(
+                        n * self.nlayers, batch_size, self.nhid).zero_())
