@@ -58,7 +58,7 @@ ngrams_valid = [([valid_data[i], valid_data[i + 1], valid_data[i + 2], valid_dat
 try:
     vocab, vec = torchwordemb.load_glove_text("../embeddings/glove.6b/glove.6B.50d.txt")
 except FileNotFoundError:
-    vocab, vec = torchwordemb.load_glove_text("../embeddings/glove.6b/glove.6B.50d.txt")
+    vocab, vec = torchwordemb.load_glove_text("./embeddings/glove.6b/glove.6B.50d.txt")
 
 # vocab of treebank
 vocab_tb = data.dictionary.word2idx.keys()
@@ -246,7 +246,10 @@ optimizer = optim.SGD(model.parameters(), lr=0.01)
 for epoch in range(100):
     print("start training epoch: {}".format(epoch))
 
-    total_loss = torch.Tensor([0])
+    if CUDA:
+        total_loss = torch.cuda.FloatTensor([0])
+    else:
+        total_loss = torch.Tensor([0])
 
     # mini_batch = 0 # counter used to use mini batches
     optimizer = exp_lr_scheduler(optimizer, epoch, init_lr=0.01, lr_decay_epoch=10)
