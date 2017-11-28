@@ -208,7 +208,7 @@ def get_variable(x):
 
 def minibatch(data, batch_size=16):
     num_batches = len(data) // batch_size
-    for i in range(0, num_batches, batch_size):
+    for i in range(0, num_batches * batch_size, batch_size):
         minibatch = []
         batch = data[i:i + batch_size]
         ngrams = [batch[d][0] for d in range(batch_size)]

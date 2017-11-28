@@ -33,7 +33,7 @@ print("CUDA: %s" % CUDA)
 
 
 # read in reduced data set
-data_check = d_read.Corpus2("../language-modeling-nlp1/data_check")
+data_check = d_read.Corpus2("language-modeling-nlp1/data_check")
 
 train_data_check = data_check.train
 valid_data_check = data_check.valid
@@ -151,8 +151,8 @@ class FFNN(nn.Module):
         #embedding = nn.Embedding(embeddings.size(0), embeddings.size(1))
         #embedding.weight = nn.Parameter(embeddings)
 
-        self.embeddings = nn.Embedding(vocab_size, embedding_dim)
-        self.embeddings.weight = nn.Parameter(embeddings)
+        self.embeds = nn.Embedding(vocab_size, embedding_dim)
+        self.embeds.weight = nn.Parameter(embeddings)
         self.linear1 = nn.Linear(context_size * embedding_dim, hidden_size)
         self.linear2 = nn.Linear(hidden_size, vocab_size)
         self.input_to_output = input_to_output
@@ -164,7 +164,7 @@ class FFNN(nn.Module):
 
 
     def forward(self, inputs,input_to_output = False):
-        embeds = self.embeddings(inputs).view((32,250)) #.view((1, -1)) ## just creates a 1 dimensional array from the given arrays
+        embeds = self.embeds(inputs).view((32,250)) #.view((1, -1)) ## just creates a 1 dimensional array from the given arrays
         out = torch.nn.functional.tanh(self.linear1(embeds))
 
         if self.input_to_output == True:
@@ -202,14 +202,16 @@ def get_variable(x):
     return Variable(tensor)
 
 def minibatch(data, batch_size=32):
-    num_batches = len(data)//32
-    for i in range(0, num_batches , batch_size):
+    num_batches = len(data)//batch_size
+    print(len(data),num_batches)
+    for i in range(0, num_batches*batch_size , batch_size):
         minibatch = []
         batch = data[i:i+batch_size]
         ngrams = [batch[d][0] for d in range(batch_size)]
         targets = [batch[j][1] for j in range(batch_size)]
         minibatch.append(ngrams)
         minibatch.append(targets)
+
 
         yield minibatch
 
@@ -238,7 +240,7 @@ print(model)
 
 optimizer = optim.SGD(model.parameters(), lr=0.01)
 
-for epoch in range(10):
+for epoch in range(2):
     print("start training epoch: {}".format(epoch))
 
     total_loss = torch.Tensor([0])
