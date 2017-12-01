@@ -99,7 +99,7 @@ for t in range(sentence_len-1):
         
         w[t][j] = i_list[j] * f_prod
         
-# print most activated word and list of all activations
+# for each word, print the most active history word and the list of all activations
 for t, word in enumerate(sent_aslist[:-1]):
     if t == 0:
         print(word, '[]\n', sep='\n')
