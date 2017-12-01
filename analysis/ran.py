@@ -4,6 +4,8 @@ import torch.nn.functional as F
 from torch.nn import init
 from torch.nn._functions.rnn import Recurrent, StackedRNN
 
+import pickle
+import numpy as np
 
 class RAN(nn.Module):
 
@@ -47,10 +49,20 @@ def RANCell(input, hidden, weights, biases):
     w_cx, w_ic, w_ix, w_fc, w_fx = weights
     b_cx, b_ic, b_ix, b_fc, b_fx = biases
 
-    ctilde_t = F.linear(input, w_cx, b_cx)
+    
+    ctilde_t = F.linear(input, w_cx, b_cx)    
     i_t = F.sigmoid(F.linear(hidden, w_ic, b_ic) + F.linear(input, w_ix, b_ix))
     f_t = F.sigmoid(F.linear(hidden, w_fc, b_fc) + F.linear(input, w_fx, b_fx))
     c_t = i_t * ctilde_t + f_t * hidden
     h_t = F.tanh(c_t)
+    
+    ctilde_t_ = ctilde_t.data.numpy()
+    i_t_ = i_t.data.numpy().reshape(i_t.size()[1])
+    f_t_ = f_t.data.numpy().reshape(f_t.size()[1])
+    
+    with open('./values.npy', 'wb') as f:
+        values = np.vstack((ctilde_t_, i_t_, f_t_))
+        print(values.shape)
+        np.save(f, values)
 
     return h_t
