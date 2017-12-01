@@ -54,7 +54,7 @@ for i, sent in enumerate(corpus, start=1):
     with_verb = False
 
     for w, t in tagged_sent:
-        # 3rd and non-3rd person singular, present tense
+        # 3rd-singular or non-3rd-singular, present tense
         if t in ('VBZ', 'VBP'):
             with_verb = True
             sent = sent.replace(w, '*{}*'.format(w), 1)
