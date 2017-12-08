@@ -94,7 +94,7 @@ w = np.zeros((sentence_len, sentence_len, ctilde_list.shape[0]))
 for t in range(sentence_len-1):
     for j in range(sentence_len-1):
         f_prod = 1
-        for k in range(j+1, sentence_len-1):
+        for k in range(j+1, t):
             f_prod *= f_list[k]
         
         w[t][j] = i_list[j] * f_prod
