@@ -45,7 +45,7 @@ input_word_indices = Variable(torch.LongTensor(input_word_indices))
 
 # delete old output if necessary
 try:
-    os.remove('./values.txt')  
+    os.remove('./values.txt')
 except FileNotFoundError:
     pass
 
@@ -84,7 +84,7 @@ f_list = []
 
 with open('./values.npy', 'rb') as f:
     values = np.load(f)
-    
+
     ctilde_list = values[0]
     i_list = values[1]
     f_list = values[2]
@@ -96,36 +96,31 @@ for t in range(sentence_len-1):
         f_prod = 1
         for k in range(j+1, t):
             f_prod *= f_list[k]
-        
+
         w[t][j] = i_list[j] * f_prod
-         
+
 print("weights ", w.shape)
 
 # for each word, print the most active history word and the list of all activations
 w_c_all = []
 for t, word in enumerate(sent_aslist[:-1]):
-   
+
     if t == 0:
         print(word, '[]\n', sep='\n')
         continue
 
     sums = np.zeros((t, ctilde_list.shape[0]))
-    
+
     for i in range(t):
-        
         sums[i] = (w[t][i] * ctilde_list[i])
-        
+
     w_c_all.append(sums)
-    
-    
+
+
 
 
 for l,k in enumerate(w_c_all):
-   
     words = sentence.split()[1:-1]
-        
-        
-        
     activations = np.sum(k, axis=1)
 
     print(activations.shape)
