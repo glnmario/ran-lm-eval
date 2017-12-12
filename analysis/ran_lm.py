@@ -21,14 +21,7 @@ corpus = data.Corpus('../data/penn/')
 embed_dims = 256
 #-------------------------------------------------#
 
-# TO EDIT
-#-------------------------------------------------#
-sentence = "i like pizza a lot"
-#-------------------------------------------------#
 
-sentence += ' <eos>'
-sent_aslist = sentence.split()
-sentence_len = len(sent_aslist)
 
 # load model for CPU
 with open(model_path, 'rb') as f:
@@ -39,7 +32,8 @@ with open(model_path, 'rb') as f:
 w2i = corpus.dictionary.word2idx
 ntokens = len(corpus.dictionary)
 
-with open('text.txt', 'r') as f_in, open('out.txt', 'w') as f_out:
+filename = 'subj_verb_without.txt'
+with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/out_{}'.format(filename), 'w') as f_out:
     for line in f_in:
         sent = line.strip().split()
 
@@ -53,13 +47,21 @@ with open('text.txt', 'r') as f_in, open('out.txt', 'w') as f_out:
 
         sent_len = stop_idx + 1
 
+        check = False
+
         sentences = []
         sentences_with_ids = []
         for verb in verbs:
+            if verb not in w2i.keys():
+                check = True
+                break
+
             # convert sentence to a list of word indices
             input_word_indices = [w2i[w] for i, w in enumerate(sent) if i < stop_idx] + [w2i[verb]]
             sentences_with_ids.append(Variable(torch.LongTensor(input_word_indices)))
             sentences.append([w for i, w in enumerate(sent) if i < stop_idx] + [verb])
+
+        if check: continue
 
         # delete old output if necessary
         try:
@@ -132,7 +134,7 @@ with open('text.txt', 'r') as f_in, open('out.txt', 'w') as f_out:
                 w_c_all.append(sums)
 
             for l, k in enumerate(w_c_all):
-                activations = np.sum(k, axis=1)
+                activations = np.sum(np.absolute(k), axis=1)
 
                 print(sentences[idx][l+1], '->', sentences[idx][np.argmax(activations)], file=f_out)
                 print(activations, '\n', file=f_out)
