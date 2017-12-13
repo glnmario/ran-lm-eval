@@ -32,7 +32,7 @@ with open(model_path, 'rb') as f:
 w2i = corpus.dictionary.word2idx
 ntokens = len(corpus.dictionary)
 
-filename = 'subj_verb_without.txt'
+filename = 'verb_form_attractor.txt'
 with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/out_{}'.format(filename), 'w') as f_out:
     for line in f_in:
         sent = line.strip().split()
@@ -47,13 +47,13 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/out_{}'
 
         sent_len = stop_idx + 1
 
-        check = False
+        verb_form_in_corpus = True
 
         sentences = []
         sentences_with_ids = []
         for verb in verbs:
             if verb not in w2i.keys():
-                check = True
+                verb_form_in_corpus = False
                 break
 
             # convert sentence to a list of word indices
@@ -61,7 +61,7 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/out_{}'
             sentences_with_ids.append(Variable(torch.LongTensor(input_word_indices)))
             sentences.append([w for i, w in enumerate(sent) if i < stop_idx] + [verb])
 
-        if check: continue
+        if not verb_form_in_corpus: continue
 
         # delete old output if necessary
         try:
