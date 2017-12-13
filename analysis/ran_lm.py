@@ -127,15 +127,15 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/out_{}'
                     print(sentences[idx][t], '[]\n', sep='\n', file=f_out)
                     continue
 
-                sums = np.zeros((sent_len, ctilde_list.shape[0]))
+                w_c = np.zeros((sent_len, ctilde_list.shape[0]))
                 for i in range(t):
-                    sums[i] = w[t][i] * ctilde_list[i]
+                    w_c[i] = w[t][i] * ctilde_list[i]
 
-                w_c_all.append(sums)
+                w_c_all.append(w_c)
 
-            for l, k in enumerate(w_c_all):
-                activations = np.sum(np.absolute(k), axis=1)
+            for t, w_c in enumerate(w_c_all):
+                activations = np.sum(np.absolute(w_c), axis=1)
 
-                print(sentences[idx][l+1], '->', sentences[idx][np.argmax(activations)], file=f_out)
+                print(sentences[idx][t+1], '->', sentences[idx][np.argmax(activations)], file=f_out)
                 print(activations, '\n', file=f_out)
         print('\n\n', file=f_out)
