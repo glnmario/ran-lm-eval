@@ -14,7 +14,18 @@ import numpy as np
 import data
 import model
 
-# TO EDIT
+def pretty_print(sentence, activations, t, f_out=None):
+    influencers_sorted = list(np.sort(activations[:t+1])[::-1])
+    relative_order = [influencers_sorted.index(x) for x in list(activations[:t+1])]
+
+    num_str = '  '
+    for i, word in enumerate(sentence[:t+1]):
+        num_str += str(relative_order[i]) + ' ' * (len(word)+3)
+
+    print(sentence[t+1], '->', sentence[np.argmax(activations)], file=f_out)
+    print(num_str, file=f_out)
+    print(sentence[:t+2], file=f_out)
+    print(activations[:t+1], '\n', file=f_out)
 
 
 #-------------------------------------------------#
@@ -22,8 +33,6 @@ model_path = '../models/model-ran-256-85.67ppl.pt'
 corpus = data.Corpus('../data/penn/')
 embed_dims = 256
 #-------------------------------------------------#
-
-
 
 # load model for CPU
 with open(model_path, 'rb') as f:
@@ -36,7 +45,7 @@ ntokens = len(corpus.dictionary)
 
 # Method for computing the most influential word
 most_influential_word_mode = 'max_w'
-#most_influential_word_mode = 'l1_c'
+most_influential_word_mode = 'l1_c'
 
 filename = 'verb_form_attractor.txt'
 with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_'+ most_influential_word_mode+'_{}'.format(filename), 'w') as f_out:
@@ -145,8 +154,10 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
                 for t, w_c in enumerate(w_c_all):
                     activations = np.sum(np.absolute(w_c), axis=1)
 
-                    print(sentences[idx][t+1], '->', sentences[idx][np.argmax(activations)], file=f_out)
-                    print(activations[:t+1], '\n', file=f_out)
+
+                    pretty_print(sentences[idx], activations, t, f_out)
+                    #print(sentences[idx][t+1], '->', sentences[idx][np.argmax(activations)], file=f_out)
+                    #print(activations[:t+1], '\n', file=f_out)
 
 
             elif most_influential_word_mode == 'max_w':
@@ -166,6 +177,9 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
                 for t, w_vec in enumerate(w_all):
                     activations = np.max(np.absolute(w_vec), axis=1)
 
-                    print(sentences[idx][t+1], '->', sentences[idx][np.argmax(activations)], file=f_out)
-                    print(activations[:t+1], '\n', file=f_out)
+                    pretty_print(sentences[idx], activations, t, f_out)
+                    #print(sentences[idx][t+1], '->', sentences[idx][np.argmax(activations)], file=f_out)
+                    #print(activations[:t+1], '\n', file=f_out)
+
+                    print()
         print('\n\n', file=f_out)
