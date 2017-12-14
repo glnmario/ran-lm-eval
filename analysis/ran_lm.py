@@ -44,8 +44,8 @@ w2i = corpus.dictionary.word2idx
 ntokens = len(corpus.dictionary)
 
 # Method for computing the most influential word
-most_influential_word_mode = 'max_w'
-# most_influential_word_mode = 'l1_c'
+# most_influential_word_mode = 'max_w'
+most_influential_word_mode = 'l1_c'
 w_old = None
 c_old = None
 
@@ -73,6 +73,7 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
                 verb_form_in_corpus = False
                 break
 
+
             # convert sentence to a list of word indices
             input_word_indices = [w2i[w] for i, w in enumerate(sent) if i < stop_idx] + [w2i[verb]]
             sentences_with_ids.append(Variable(torch.LongTensor(input_word_indices)))
@@ -80,15 +81,18 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
 
         if not verb_form_in_corpus: continue
 
-        # delete old output if necessary
-        try:
-            os.remove('./ctilde.npy')
-            os.remove('./i.npy')
-            os.remove('./f.npy')
-        except FileNotFoundError:
-            pass
+
 
         for idx, s_with_ids in enumerate(sentences_with_ids):
+
+            # delete old output if necessary
+            try:
+                os.remove('./ctilde.npy')
+                os.remove('./i.npy')
+                os.remove('./f.npy')
+            except FileNotFoundError:
+                pass
+
             # initialise hidden for first timestep
             hidden = model.init_hidden(batch_size=1)
             # forward pass
@@ -126,6 +130,8 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
             # print(i_list.shape)
             # print(f_list.shape)
 
+            ctilde_list
+
             # compute 3D matrix fo weights
             w = np.zeros((sent_len, sent_len, ctilde_list.shape[1]))
             for t in range(sent_len):
@@ -136,15 +142,15 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
 
                     w[t][j] = i_list[j] * f_prod
 
-            # if w_old is not None:
-            #     print(np.sum(w!=w_old))
-            # else:
-            #     w_old = np.copy(w)
+            if w_old is not None:
+                print(np.any(w!=w_old))
+            else:
+                w_old = np.copy(w)
 
-            # if c_old is not None:
-            #     print(np.sum(ctilde_list!=c_old))
-            # else:
-            #     c_old = np.copy(ctilde_list)
+            if c_old is not None:
+                print(np.any(ctilde_list!=c_old))
+            else:
+                c_old = np.copy(ctilde_list)
              # for each word, print the most active history word and the list of all activations
 
             if most_influential_word_mode == 'l1_c':
