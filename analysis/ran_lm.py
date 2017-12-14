@@ -45,9 +45,11 @@ ntokens = len(corpus.dictionary)
 
 # Method for computing the most influential word
 most_influential_word_mode = 'max_w'
-most_influential_word_mode = 'l1_c'
+# most_influential_word_mode = 'l1_c'
+w_old = None
+c_old = None
 
-filename = 'verb_form_attractor.txt'
+filename = 'subj_verb_without.txt'
 with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_'+ most_influential_word_mode+'_{}'.format(filename), 'w') as f_out:
     for line in f_in:
         sent = line.strip().split()
@@ -80,7 +82,9 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
 
         # delete old output if necessary
         try:
-            os.remove('./values.txt')
+            os.remove('./ctilde.npy')
+            os.remove('./i.npy')
+            os.remove('./f.npy')
         except FileNotFoundError:
             pass
 
@@ -114,28 +118,34 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
 
             # now we recover values for candidates, input gates, and
             # forget gates, which have been saved during forward pass
-            ctilde_list = []
-            i_list = []
-            f_list = []
+            ctilde_list = np.load('./ctilde.npy')
+            i_list = np.load('./i.npy')
+            f_list = np.load('./f.npy')
 
-            with open('./values.npy', 'rb') as f:
-                values = np.load(f)
-
-                ctilde_list = values[0]
-                i_list = values[1]
-                f_list = values[2]
+            # print(ctilde_list.shape)
+            # print(i_list.shape)
+            # print(f_list.shape)
 
             # compute 3D matrix fo weights
-            w = np.zeros((sent_len, sent_len, ctilde_list.shape[0]))
+            w = np.zeros((sent_len, sent_len, ctilde_list.shape[1]))
             for t in range(sent_len):
-                for j in range(sent_len):
-                    f_prod = 1
+                for j in range(t):
+                    f_prod = np.ones((f_list.shape[1]))
                     for k in range(j+1, t):
                         f_prod *= f_list[k]
 
                     w[t][j] = i_list[j] * f_prod
 
-            # for each word, print the most active history word and the list of all activations
+            # if w_old is not None:
+            #     print(np.sum(w!=w_old))
+            # else:
+            #     w_old = np.copy(w)
+
+            # if c_old is not None:
+            #     print(np.sum(ctilde_list!=c_old))
+            # else:
+            #     c_old = np.copy(ctilde_list)
+             # for each word, print the most active history word and the list of all activations
 
             if most_influential_word_mode == 'l1_c':
                 w_c_all = []
@@ -144,7 +154,7 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
                         print(sentences[idx][t], '[]\n', sep='\n', file=f_out)
                         continue
 
-                    w_c = np.zeros((sent_len, ctilde_list.shape[0]))
+                    w_c = np.zeros((sent_len, ctilde_list.shape[1]))
                     for i in range(t):
                         w_c[i] = w[t][i] * ctilde_list[i]
 
@@ -167,7 +177,7 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
                         print(sentences[idx][t], '[]\n', sep='\n', file=f_out)
                         continue
 
-                    w_vec = np.zeros((sent_len, ctilde_list.shape[0]))
+                    w_vec = np.zeros((sent_len, f_list.shape[1]))
                     for i in range(t):
                         w_vec[i] = w[t][i]
 
@@ -180,6 +190,5 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
                     pretty_print(sentences[idx], activations, t, f_out)
                     #print(sentences[idx][t+1], '->', sentences[idx][np.argmax(activations)], file=f_out)
                     #print(activations[:t+1], '\n', file=f_out)
-
-                    print()
         print('\n\n', file=f_out)
+        break

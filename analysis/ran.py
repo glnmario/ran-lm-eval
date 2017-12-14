@@ -60,8 +60,30 @@ def RANCell(input, hidden, weights, biases):
     i_t_ = i_t.data.numpy().reshape(i_t.size()[1])
     f_t_ = f_t.data.numpy().reshape(f_t.size()[1])
 
-    with open('./values.npy', 'wb') as f:
-        values = np.vstack((ctilde_t_, i_t_, f_t_))
-        np.save(f, values)
+    try:
+        ctilde_list = np.load('./ctilde.npy')
+        # print('c_tilde_list', ctilde_list.shape)
+
+        i_list = np.load('./i.npy')
+        # print('i_list', i_list.shape)
+
+        f_list = np.load('./f.npy')
+        # print('f_list', f_list.shape)
+
+        ctilde_t_ = np.vstack((ctilde_list, ctilde_t_))
+        # print('c_tilde_t',ctilde_t_.shape)
+        i_t_ = np.vstack((i_list, i_t_))
+        f_t_ = np.vstack((f_list, f_t_))
+        # values = np.vstack((ctilde_t_, i_t_, f_t_))
+        # print(values.shape)
+
+        np.save('./ctilde.npy', ctilde_t_)
+        np.save('./i.npy', i_t_)
+        np.save('./f.npy', f_t_)
+
+    except FileNotFoundError:
+        np.save('./ctilde.npy', ctilde_t_)
+        np.save('./i.npy', i_t_)
+        np.save('./f.npy', f_t_)
 
     return h_t
