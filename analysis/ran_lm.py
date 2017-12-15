@@ -32,7 +32,17 @@ def pretty_print(sentence, activations, t, f_out=None):
 
 def plot_influence_sent(inf_matrix, sent):
     assert len(inf_matrix)==len(sent)
-    plt.matshow(inf_matrix, cmap=plt.cm.Blues)
+    print(sent)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(inf_matrix, cmap=plt.cm.Blues)
+    cbar = fig.colorbar(cax)
+
+    ax.set_xticks(np.arange(len(sent)))
+    ax.set_yticks(np.arange(len(sent)))
+    ax.set_xticklabels(sent, rotation=45)
+    ax.set_yticklabels(sent, rotation=45)
+    ax.axis('image')
     plt.show()
 
 
@@ -54,6 +64,7 @@ ntokens = len(corpus.dictionary)
 # Method for computing the most influential word
 most_influential_word_mode = 'max_w'
 # most_influential_word_mode = 'l2'
+# most_influential_word_mode = 'l1'
 # most_influential_word_mode = 'l1_c'
 w_old = None
 c_old = None
@@ -185,7 +196,7 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
 
                     pretty_print(sentences[idx], activations, t, f_out)
 
-                #plot_influence_sent(influence_matrix.T, sentences[idx])
+                plot_influence_sent(influence_matrix.T, sentences[idx])
 
             elif most_influential_word_mode == 'l2':
                 influence_matrix = np.zeros((sent_len, sent_len))
@@ -195,6 +206,16 @@ with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_
 
                     pretty_print(sentences[idx], activations, t, f_out)
 
-                #plot_influence_sent(influence_matrix.T, sentences[idx])
+                plot_influence_sent(influence_matrix.T, sentences[idx])
+
+            elif most_influential_word_mode == 'l1':
+                influence_matrix = np.zeros((sent_len, sent_len))
+                for t, w_vec in enumerate(w):
+                    activations = np.linalg.norm(w_vec, ord=1, axis=1)
+                    influence_matrix[t] = activations
+
+                    pretty_print(sentences[idx], activations, t, f_out)
+
+                plot_influence_sent(influence_matrix.T, sentences[idx])
         print('\n\n', file=f_out)
         break
