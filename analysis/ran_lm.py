@@ -69,7 +69,7 @@ if __name__ == "__main__":
     c_old = None
 
     filename = args.file
-    with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_'+ most_influential_word_mode+'_{}'.format(filename), 'w') as f_out:
+    with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_'+ args.mode +'_{}'.format(filename), 'w') as f_out:
         for line in f_in:
             sent = line.strip().split()
 
