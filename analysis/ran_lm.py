@@ -45,11 +45,10 @@ def plot_influence_sent(inf_matrix, sent):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Analyse RAN language model.')
     parser.add_argument('--file', type=str,  help='path of the input file (a list of annotated sentences)')
-    parser.add_argument('--mode', default='l1', help='l1, l2, max_w, or l1_c')
-    parser.add_argument('--print', default=False, help='whether to print the activations to file')
-    parser.add_argument('--plot', default=False, help='whether to show plots')
+    parser.add_argument('--mode', default='l1', help='l1, l2, max_w, or l1_c', choices=['l1', 'l2', 'max_w', 'l1_c'])
+    parser.add_argument('--print', action='store_true', default=False, help='whether to print the activations to file')
+    parser.add_argument('--plot', action='store_true', default=False, help='whether to show plots')
     args = parser.parse_args()
-
 
     #-------------------------------------------------#
     model_path = '../models/model-ran-256-85.67ppl.pt'
@@ -71,8 +70,10 @@ if __name__ == "__main__":
     w_old = None
     c_old = None
 
-    filename = args.file
-    with open('sentences/{}'.format(filename), 'r') as f_in, open('sentences/'+'out_'+ args.mode +'_{}'.format(filename), 'w') as f_out:
+    file_in = args.file
+    file_out = 'sentences/out_{}_{}'.format(args.mode, file_in)
+
+    with open('sentences/{}'.format(file_in), 'r') as f_in, open(file_out, 'w') as f_out:
         for line in f_in:
             sent = line.strip().split()
 
@@ -205,4 +206,5 @@ if __name__ == "__main__":
 
                     if args.plot: plot_influence_sent(influence_matrix.T, sentences[idx])
             print('\n\n', file=f_out)
-        print('Analysis written to file: sentences/{}'.format(filename))
+        # Final log
+        print('Analysis written to file: sentences/{}'.format(file_out))
