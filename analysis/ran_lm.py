@@ -46,7 +46,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Analyse RAN language model.')
     parser.add_argument('--file', type=str,  help='path of the input file (a list of annotated sentences)')
     parser.add_argument('--mode', default='l1', help='l1, l2, max_w, or l1_c')
+    parser.add_argument('--print', default=False, help='whether to print the activations to file')
+    parser.add_argument('--plot', default=False, help='whether to show plots')
     args = parser.parse_args()
+
 
     #-------------------------------------------------#
     model_path = '../models/model-ran-256-85.67ppl.pt'
@@ -170,9 +173,7 @@ if __name__ == "__main__":
 
                     for t, w_c in enumerate(w_c_all):
                         activations = np.sum(np.absolute(w_c), axis=1)
-                        pretty_print(sentences[idx], activations, t, f_out)
-                        #print(sentences[idx][t+1], '->', sentences[idx][np.argmax(activations)], file=f_out)
-                        #print(activations[:t+1], '\n', file=f_out)
+                        if args.print == True: pretty_print(sentences[idx], activations, t, f_out)
 
                 elif args.mode == 'max_w':
                     influence_matrix = np.zeros((sent_len, sent_len))
@@ -180,9 +181,9 @@ if __name__ == "__main__":
                         activations = np.max(np.absolute(w_vec), axis=1)
                         influence_matrix[t] = activations
 
-                        pretty_print(sentences[idx], activations, t, f_out)
+                        if args.print == True: pretty_print(sentences[idx], activations, t, f_out)
 
-                    plot_influence_sent(influence_matrix.T, sentences[idx])
+                    if args.plot: plot_influence_sent(influence_matrix.T, sentences[idx])
 
                 elif args.mode == 'l2':
                     influence_matrix = np.zeros((sent_len, sent_len))
@@ -190,9 +191,9 @@ if __name__ == "__main__":
                         activations = np.linalg.norm(w_vec, axis=1)
                         influence_matrix[t] = activations
 
-                        pretty_print(sentences[idx], activations, t, f_out)
+                        if args.print == True: pretty_print(sentences[idx], activations, t, f_out)
 
-                    plot_influence_sent(influence_matrix.T, sentences[idx])
+                    if args.plot: plot_influence_sent(influence_matrix.T, sentences[idx])
 
                 elif args.mode == 'l1':
                     influence_matrix = np.zeros((sent_len, sent_len))
@@ -200,7 +201,8 @@ if __name__ == "__main__":
                         activations = np.linalg.norm(w_vec, ord=1, axis=1)
                         influence_matrix[t] = activations
 
-                        pretty_print(sentences[idx], activations, t, f_out)
+                        if args.print: pretty_print(sentences[idx], activations, t, f_out)
 
-                    plot_influence_sent(influence_matrix.T, sentences[idx])
+                    if args.plot: plot_influence_sent(influence_matrix.T, sentences[idx])
             print('\n\n', file=f_out)
+        print('Analysis written to file: sentences/{}'.format(filename))
