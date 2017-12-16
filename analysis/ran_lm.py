@@ -207,4 +207,4 @@ if __name__ == "__main__":
                     if args.plot: plot_influence_sent(influence_matrix.T, sentences[idx])
             print('\n\n', file=f_out)
         # Final log
-        print('Analysis written to file: sentences/{}'.format(file_out))
+        print('Analysis written to file: {}'.format(file_out))
